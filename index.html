@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CrimeBuster Jumps</title>
+  <link rel="stylesheet" href="r/activities/FROGGY_JUMPS/assets/main-DmFvChno.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #root { width: 100%; height: 100%; overflow: hidden; }
+
+    /* ── Name screen ──────────────────────────────────────────────── */
+    #cb-name-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(135deg, #0d2b0d 0%, #1a4f1a 60%, #2d6a2d 100%);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 20px;
+      font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+    }
+    #cb-logo {
+      width: 90px; height: 90px; border-radius: 22px;
+      background: #b8e986; display: flex; align-items: center;
+      justify-content: center; font-size: 3.2rem; font-weight: 900;
+      color: #0d2b0d; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      letter-spacing: -2px;
+    }
+    #cb-name-screen h1 {
+      color: #fff; font-size: 2.4rem; font-weight: 900;
+      letter-spacing: -1px; text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    #cb-name-screen p { color: #b8e986; font-size: 1rem; opacity: 0.9; }
+    #cb-name-form {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(184,233,134,0.25);
+      border-radius: 20px; padding: 28px 32px;
+      display: flex; flex-direction: column; gap: 14px;
+      min-width: 300px; backdrop-filter: blur(12px);
+    }
+    #cb-name-form label { color: #fff; font-weight: 700; font-size: 0.95rem; }
+    #cb-name-input {
+      padding: 13px 16px; border-radius: 12px;
+      border: 2px solid transparent; font-size: 1.05rem;
+      font-family: inherit; outline: none;
+      background: rgba(255,255,255,0.92); transition: border 0.2s;
+    }
+    #cb-name-input:focus { border-color: #b8e986; }
+    #cb-name-btn {
+      padding: 14px; border-radius: 12px; border: none;
+      background: #b8e986; color: #0d2b0d;
+      font-size: 1.05rem; font-weight: 800;
+      font-family: inherit; cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+    }
+    #cb-name-btn:hover { background: #a0d165; transform: scale(1.02); }
+    #cb-returning {
+      color: rgba(255,255,255,0.5); font-size: 0.8rem;
+      text-align: center; cursor: pointer; text-decoration: underline;
+    }
+    #cb-returning:hover { color: #b8e986; }
+
+    /* ── Certificate overlay ──────────────────────────────────────── */
+    #cb-cert-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.85);
+      display: none; align-items: center; justify-content: center;
+      font-family: 'Nunito', Arial, sans-serif;
+    }
+    #cb-cert-overlay.show { display: flex; }
+    #cb-cert-wrap {
+      background: #fff; border-radius: 24px;
+      padding: 32px; max-width: 580px; width: 92%;
+      text-align: center; box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    #cb-cert-canvas { max-width: 100%; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    #cb-cert-actions { margin-top: 18px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .cb-btn {
+      padding: 12px 26px; border-radius: 12px; border: none;
+      font-size: 0.95rem; font-weight: 800; cursor: pointer;
+      font-family: inherit; transition: transform 0.1s, opacity 0.2s;
+    }
+    .cb-btn:hover { transform: scale(1.04); opacity: 0.9; }
+    .cb-btn-green { background: #b8e986; color: #0d2b0d; }
+    .cb-btn-dark  { background: #1a4f1a; color: #fff; }
+    .cb-btn-ghost { background: transparent; color: #888; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Name screen ─────────────────────────────────────────────── -->
+  <div id="cb-name-screen">
+    <div id="cb-logo">C</div>
+    <h1>CrimeBusters</h1>
+    <p>Learn to stay safe online 🔐</p>
+    <form id="cb-name-form" onsubmit="cbStartGame(event)">
+      <label for="cb-name-input">What's your first name?</label>
+      <input id="cb-name-input" type="text" placeholder="Enter your name…"
+             maxlength="30" autocomplete="off" required />
+      <button id="cb-name-btn" type="submit">Let's Go! 🚀</button>
+    </form>
+    <span id="cb-returning" onclick="cbForgetMe()" style="display:none">
+      Not you? Switch player
+    </span>
+  </div>
+
+  <!-- ── Game root ───────────────────────────────────────────────── -->
+  <div id="root"></div>
+
+  <!-- ── Certificate overlay ────────────────────────────────────── -->
+  <div id="cb-cert-overlay">
+    <div id="cb-cert-wrap">
+      <canvas id="cb-cert-canvas" width="520" height="370"></canvas>
+      <div id="cb-cert-actions">
+        <button class="cb-btn cb-btn-green" onclick="cbDownloadCert()">⬇ Download Certificate</button>
+        <button class="cb-btn cb-btn-dark"  onclick="cbPlayAgain()">↺ Play Again</button>
+        <button class="cb-btn cb-btn-ghost" onclick="cbSwitchPlayer()">Switch Player</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── C logo as data URL (replaces Educaplay "e" icon) ────────────
+    const _lc = Object.assign(document.createElement('canvas'), { width: 200, height: 200 });
+    const _lctx = _lc.getContext('2d');
+    _lctx.fillStyle = '#b8e986';
+    _lctx.roundRect(0, 0, 200, 200, 44); _lctx.fill();
+    _lctx.fillStyle = '#0d2b0d';
+    _lctx.font = 'bold 128px Arial';
+    _lctx.textAlign = 'center'; _lctx.textBaseline = 'middle';
+    _lctx.fillText('C', 100, 108);
+    const LOGO_URL = _lc.toDataURL('image/png');
+
+    // ── CDN asset map ────────────────────────────────────────────────
+    const CDN = 'https://cloud.educaplay.com/r/activitiesassets/';
+    const ASSET_MAP = {
+      'activitiesassets/FROGGY_JUMPS/background.png':               CDN + 'FROGGY_JUMPS/background.69b3d4f8757f5.png',
+      'activitiesassets/FROGGY_JUMPS/platform.png':                 CDN + 'FROGGY_JUMPS/platform.69b3e09615e6d.png',
+      'activitiesassets/FROGGY_JUMPS/platform-shadow.png':          CDN + 'FROGGY_JUMPS/platform-shadow.69b3d4f875fa1.png',
+      'activitiesassets/FROGGY_JUMPS/rana.png':                     CDN + 'FROGGY_JUMPS/rana.69b3d4f876359.png',
+      'activitiesassets/FROGGY_JUMPS/hundimiento.png':              CDN + 'FROGGY_JUMPS/hundimiento.69b3e096159ef.png',
+      'activitiesassets/FROGGY_JUMPS/hundimiento2.png':             CDN + 'FROGGY_JUMPS/hundimiento2.69b3e09615d9f.png',
+      'activitiesassets/FROGGY_JUMPS/suelo.png':                    CDN + 'FROGGY_JUMPS/suelo.69b3d4f876618.png',
+      'activitiesassets/FROGGY_JUMPS/logoActivity.png':             CDN + 'FROGGY_JUMPS/logoActivity.69b3d4f875d57.png',
+      'activitiesassets/FROGGY_JUMPS/coin.mp3':                     CDN + 'FROGGY_JUMPS/coin.69b3d4f875874.mp3',
+      'activitiesassets/FROGGY_JUMPS/croar.mp3':                    CDN + 'FROGGY_JUMPS/croar.69b3d4f8758f3.mp3',
+      'activitiesassets/FROGGY_JUMPS/error.mp3':                    CDN + 'FROGGY_JUMPS/error.69b3d4f875977.mp3',
+      'activitiesassets/FROGGY_JUMPS/game_over.mp3':                CDN + 'FROGGY_JUMPS/game_over.69b3d4f875a61.mp3',
+      'activitiesassets/FROGGY_JUMPS/game_win.mp3':                 CDN + 'FROGGY_JUMPS/game_win.69b3d4f875b0a.mp3',
+      'activitiesassets/FROGGY_JUMPS/hundimiento_burbujas.mp3':     CDN + 'FROGGY_JUMPS/hundimiento_burbujas.69b3d4f875c6b.mp3',
+      'activitiesassets/FROGGY_JUMPS/hundimiento_impacto-agua.mp3': CDN + 'FROGGY_JUMPS/hundimiento_impacto-agua.69b3d4f875ce1.mp3',
+      'activitiesassets/FROGGY_JUMPS/on_press_ok.mp3':              CDN + 'FROGGY_JUMPS/on_press_ok.69b3d4f875dcd.mp3',
+      'activitiesassets/FROGGY_JUMPS/on_press_wrong.mp3':           CDN + 'FROGGY_JUMPS/on_press_wrong.69b3d4f875e40.mp3',
+      'activitiesassets/FROGGY_JUMPS/over.mp3':                     CDN + 'FROGGY_JUMPS/over.69b3d4f875eb4.mp3',
+      'activitiesassets/FROGGY_JUMPS/salto2.mp3':                   CDN + 'FROGGY_JUMPS/salto2.69b3d4f876492.mp3',
+      'activitiesassets/FROGGY_JUMPS/salto_pisa_ok.mp3':            CDN + 'FROGGY_JUMPS/salto_pisa_ok.69b3d4f876516.mp3',
+      'activitiesassets/FROGGY_JUMPS/salto_pisa_wrong.mp3':         CDN + 'FROGGY_JUMPS/salto_pisa_wrong.69b3d4f876596.mp3',
+      'activitiesassets/common/intro.mp3':                          CDN + 'common/intro.mp3',
+    };
+    window.getResource = path => ASSET_MAP[path] || (CDN + path);
+
+    // ── Player session ───────────────────────────────────────────────
+    let playerName = localStorage.getItem('cb_player_name') || '';
+    let lastScore = 0;
+
+    if (playerName) {
+      document.getElementById('cb-name-input').value = playerName;
+      document.getElementById('cb-returning').style.display = 'block';
+      document.getElementById('cb-name-btn').textContent = `Go, ${playerName}! 🚀`;
+    }
+
+    function cbStartGame(e) {
+      e.preventDefault();
+      playerName = document.getElementById('cb-name-input').value.trim();
+      if (!playerName) return;
+      localStorage.setItem('cb_player_name', playerName);
+      document.getElementById('cb-name-screen').style.display = 'none';
+      _launchGame();
+    }
+
+    function cbForgetMe() {
+      localStorage.removeItem('cb_player_name');
+      playerName = '';
+      document.getElementById('cb-name-input').value = '';
+      document.getElementById('cb-returning').style.display = 'none';
+      document.getElementById('cb-name-btn').textContent = "Let's Go! 🚀";
+      document.getElementById('cb-name-input').focus();
+    }
+
+    // ── Launch game ──────────────────────────────────────────────────
+    let _gameLoaded = false;
+    function _launchGame() {
+      if (_gameLoaded) return;
+      _gameLoaded = true;
+
+      // Build config with real player name
+      window.__EDUCAPLAY_GAME_CONFIG = {
+        id: 'crimebusters-local',
+        title: 'Cyber Wisdom',
+        description: 'Cybersecurity Challenge',
+        author: 'CrimeBusters',
+        url: 'http://localhost:8000',
+        user: { name: playerName, nickname: playerName, username: playerName, type: 'anonymous', token: 'cb-' + playerName, image: 'https://cloud.educaplay.com/r/activitiesassets/common/usuario.svg' },
+        session: null, environment: null, match: null,
+
+        texts: {
+          specific: {
+            type: 'CrimeBuster Jumps',   // subtitle under the game logo
+          },
+          common: {
+            main: {
+              start: 'Start',
+              copy: '',                   // hides Educaplay copyright line
+              clickHereToIdentifyYourself: 'Click to identify yourself',
+            },
+            game: {
+              question: 'Question', correct: 'Correct!', wrong: 'Wrong!',
+              score: 'Score', lives: 'Lives', time: 'Time',
+              play: 'Play', restart: 'Play Again', exit: 'Exit',
+              finish: 'Finish', next: 'Next', previous: 'Previous',
+              close: 'Close', cancel: 'Cancel', confirm: 'Confirm',
+              yes: 'Yes', no: 'No', ok: 'OK', loading: 'Loading…',
+              gameOver: 'Game Over', youWon: "You're a CrimeBuster!",
+              finalScore: 'Final Score', share: 'Share', results: 'Results',
+              solution: 'Solution', showSolution: 'Show solution',
+              hideSolution: 'Hide solution', points: 'Points',
+              seconds: 'Seconds', questions: 'Questions',
+              answered: 'Answered', unanswered: 'Unanswered',
+              correct_answers: 'Correct', wrong_answers: 'Wrong',
+              start: 'Start', countdown: 'Get ready!', timesUp: "Time's up!",
+              yourAnswer: 'Your answer', correctAnswer: 'Correct answer',
+              noAnswer: 'No answer', ranking: 'Ranking', you: 'You',
+              waitingPlayers: 'Waiting for players…',
+              allAnswered: 'All answered!', questionOf: 'of',
+            },
+            social: { facebook: 'Share on Facebook', twitter: 'Share on Twitter' },
+            errors: { generic: 'An error occurred.' },
+          },
+        },
+
+        settings: {
+          mainResources: CDN, resources: '',
+          ads: false, rating: { url: null }, login: { url: '#' },
+        },
+
+        customizations: {
+          hasCustomColors: false, colors: {},
+          backgroundImage: { src: null, showGame: true },
+          customLogo: null, customBarLogo: null, hideEducaplayBrand: true,
+        },
+
+        data: {
+          LOGO: LOGO_URL,              // replaces the "e" logo via createCustomization()
+          HIDE_EDUCAPLAY_BRAND: 'si', // hides Educaplay branding
+          ALEATORIO: 'si',              // shuffle so each game is different
+          NUMERO_PREGUNTAS_VISIBLES: '9', // 9 questions per round
+          TIEMPO: '40',                  // 40 s per question (kids need more time)
+          NUMERO_INTENTOS: '3',
+          NUMERO_INTENTOS_INFINITOS: 'no',
+          TIEMPO_INFINITO: 'no',
+          MOSTRAR_TIEMPO: 'si',
+          OCULTAR_RESPUESTAS: '0',
+          OCULTAR_REINICIAR: '0',
+          OCULTAR_REDES: '0',
+          TEXTO_FINAL: "You're a CrimeBuster! Stay safe online! 🔐",
+
+          PREGUNTAS: [
+            // ── PHISHING ─────────────────────────────────────────────
+            {
+              ENUNCIADO: "You get an email saying you won a free phone! It asks for your home address. What do you do?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "Delete it — it's a scam",   RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Reply with your address",    RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Click the link to claim it", RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            {
+              ENUNCIADO: "A message says 'Your account will close! Click HERE NOW!' What is this called?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "Phishing",  RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Gaming",    RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Updating",  RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            {
+              ENUNCIADO: "How can you spot a fake website?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "The web address looks wrong", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "It loads very fast",          RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "It has lots of pictures",     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            // ── PASSWORDS ────────────────────────────────────────────
+            {
+              ENUNCIADO: "Which is the STRONGEST password?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "T!g3r$unR1se#9", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "password123",     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "myname2010",      RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            {
+              ENUNCIADO: "Who should you share your password with?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "Nobody",           RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Your best friend", RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Anyone who asks",  RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            {
+              ENUNCIADO: "What makes a password hard to guess?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "Mix of letters, numbers & symbols", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Using your pet's name",             RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Short and simple",                  RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            // ── ONLINE PRIVACY ───────────────────────────────────────
+            {
+              ENUNCIADO: "A stranger online asks where you live. What should you do?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "Tell a trusted adult & don't reply", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Tell them your address",             RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Give your school name instead",      RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            {
+              ENUNCIADO: "Which of these is safe to post publicly online?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "Your favourite colour", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Your home address",     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Your phone number",     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            {
+              ENUNCIADO: "What does 'private account' mean on social media?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "Only approved people see your posts", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Everyone can see you",                RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Your account is deleted",             RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            // ── CYBER THREATS ────────────────────────────────────────
+            {
+              ENUNCIADO: "What is malware?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "Harmful software that damages your device", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "A type of video game",                      RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "A safe app update",                         RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            {
+              ENUNCIADO: "Someone online is being mean and scary to you. What do you do?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "Block, report & tell a trusted adult", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Be mean back",                         RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Share their messages with friends",    RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            {
+              ENUNCIADO: "What should you do before clicking a link in a message?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "Check it looks real and ask an adult", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Click it straight away",               RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Forward it to all your friends",       RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            {
+              ENUNCIADO: "Is it safe to use public WiFi to log into school accounts?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "No — public WiFi is not secure", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Yes — WiFi is always safe",      RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Only if you use a password",     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+            {
+              ENUNCIADO: "What is two-factor authentication (2FA)?",
+              MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+              RESPUESTAS: [
+                { RESPUESTA: "A second check to prove it's really you", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Having two passwords",                     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+                { RESPUESTA: "Logging in on two devices",                RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+              ],
+            },
+          ],
+        },
+      };
+
+      // Patch DOM after React renders:
+      // 1. Swap "Froggy Jumps" text → "CrimeBuster Jumps"
+      // 2. Replace the top Educaplay "e" logo img → C logo
+      // 3. Ensure Start button has its label
+      new MutationObserver(() => {
+        // Text swap
+        document.querySelectorAll('*').forEach(el => {
+          if (el.children.length === 0 && el.textContent.trim() === 'Froggy Jumps') {
+            el.textContent = 'CrimeBuster Jumps';
+          }
+        });
+        // Fix "Start" button — framework may render it blank if text key misses
+        document.querySelectorAll('button').forEach(btn => {
+          const txt = btn.textContent.trim();
+          if ((txt === '' || txt === '▶' || txt === '►') && btn.querySelector('svg,span')) {
+            const spans = btn.querySelectorAll('span');
+            spans.forEach(s => { if (s.textContent.trim() === '') s.textContent = 'Start'; });
+          }
+        });
+      }).observe(document.body, { childList: true, subtree: true });
+
+      // Inject game script
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'r/activities/FROGGY_JUMPS/assets/main-CyC8mWoN.js';
+      document.body.appendChild(s);
+    }
+
+    // ── Certificate ──────────────────────────────────────────────────
+    window.addEventListener('activity-finish', e => {
+      const d = e.detail || {};
+      lastScore = d.points ?? d.score ?? 0;
+      setTimeout(showCertificate, 2200);
+    });
+
+    function showCertificate() {
+      drawCertificate();
+      document.getElementById('cb-cert-overlay').classList.add('show');
+    }
+
+    function drawCertificate() {
+      const canvas = document.getElementById('cb-cert-canvas');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+
+      // Background gradient
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, '#0d2b0d');
+      bg.addColorStop(1, '#1a4f1a');
+      ctx.fillStyle = bg;
+      ctx.roundRect(0, 0, W, H, 20); ctx.fill();
+
+      // Outer border
+      ctx.strokeStyle = '#b8e986'; ctx.lineWidth = 4;
+      ctx.roundRect(8, 8, W-16, H-16, 14); ctx.stroke();
+
+      // Inner decorative border
+      ctx.strokeStyle = 'rgba(184,233,134,0.25)'; ctx.lineWidth = 1;
+      ctx.roundRect(18, 18, W-36, H-36, 10); ctx.stroke();
+
+      // C badge
+      ctx.fillStyle = '#b8e986';
+      ctx.beginPath(); ctx.arc(W/2, 68, 34, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#0d2b0d';
+      ctx.font = 'bold 42px Arial';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('C', W/2, 70);
+
+      // CRIMEBUSTERS
+      ctx.fillStyle = '#b8e986';
+      ctx.font = 'bold 20px Arial'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('CRIMEBUSTERS', W/2, 122);
+
+      // Subtitle
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '12px Arial';
+      ctx.fillText('CERTIFICATE OF ACHIEVEMENT', W/2, 144);
+
+      // Divider
+      ctx.strokeStyle = 'rgba(184,233,134,0.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(60, 156); ctx.lineTo(W-60, 156); ctx.stroke();
+
+      // This certifies that
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '13px Arial';
+      ctx.fillText('This certifies that', W/2, 182);
+
+      // Player name
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 30px Arial';
+      ctx.fillText(playerName, W/2, 216);
+
+      // has completed
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = '13px Arial';
+      ctx.fillText('has completed the Cybersecurity Challenge', W/2, 240);
+
+      // Score badge
+      const pct = Math.round(lastScore);
+      const grade = pct >= 80 ? '⭐ Expert CrimeBuster'
+                  : pct >= 55 ? '🔍 Junior CrimeBuster'
+                  :             '🛡️ CrimeBuster Trainee';
+
+      ctx.fillStyle = 'rgba(184,233,134,0.15)';
+      ctx.roundRect(W/2-140, 258, 280, 44, 10); ctx.fill();
+      ctx.strokeStyle = 'rgba(184,233,134,0.4)'; ctx.lineWidth = 1;
+      ctx.roundRect(W/2-140, 258, 280, 44, 10); ctx.stroke();
+
+      ctx.fillStyle = '#b8e986';
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText(`Score: ${pct} pts`, W/2, 276);
+      ctx.font = '13px Arial';
+      ctx.fillText(grade, W/2, 294);
+
+      // Date
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = '11px Arial';
+      const date = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+      ctx.fillText(date, W/2, 338);
+
+      ctx.fillStyle = 'rgba(184,233,134,0.45)';
+      ctx.font = '10px Arial';
+      ctx.fillText('crimebusters.app', W/2, 356);
+    }
+
+    function cbDownloadCert() {
+      const a = Object.assign(document.createElement('a'), {
+        download: `CrimeBusters_${playerName}_Certificate.png`,
+        href: document.getElementById('cb-cert-canvas').toDataURL('image/png'),
+      });
+      a.click();
+    }
+
+    function cbPlayAgain() {
+      document.getElementById('cb-cert-overlay').classList.remove('show');
+      location.reload();
+    }
+
+    function cbSwitchPlayer() {
+      localStorage.removeItem('cb_player_name');
+      location.reload();
+    }
+
+    // Dummy results payload (prevents activityController crash)
+    ;(function() {
+      const key = '9xnr4H8_8Hidh67679';
+      const src = JSON.stringify({ type: 'anonymous', reports: '', token: 'local' });
+      let out = '';
+      for (let i = 0; i < src.length; i++)
+        out += String.fromCharCode(src.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      window.__EDUCAPLAY_GAME_RESULTS = btoa(out);
+    })();
+  </script>
+
+</body>
+</html>
