@@ -9,6 +9,16 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body, #root { width: 100%; height: 100%; overflow: hidden; }
 
+    /* ── Level badge ─────────────────────────────────────────────── */
+    #cb-level-pill {
+      position: fixed; top: 12px; right: 14px; z-index: 9000;
+      background: rgba(13,43,13,0.85); border: 1px solid #b8e986;
+      color: #b8e986; font-family: 'Nunito', Arial, sans-serif;
+      font-size: 0.78rem; font-weight: 800; letter-spacing: 0.5px;
+      padding: 5px 13px; border-radius: 999px;
+      backdrop-filter: blur(8px); display: none;
+    }
+
     /* ── Name screen ──────────────────────────────────────────────── */
     #cb-name-screen {
       position: fixed; inset: 0; z-index: 9999;
@@ -57,6 +67,42 @@
       text-align: center; cursor: pointer; text-decoration: underline;
     }
     #cb-returning:hover { color: #b8e986; }
+
+    /* ── Level transition overlay ────────────────────────────────── */
+    #cb-level-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.88);
+      display: none; align-items: center; justify-content: center;
+      font-family: 'Nunito', Arial, sans-serif;
+    }
+    #cb-level-overlay.show { display: flex; }
+    #cb-level-wrap {
+      background: linear-gradient(135deg, #0d2b0d 0%, #1a4f1a 100%);
+      border: 2px solid #b8e986;
+      border-radius: 24px; padding: 40px 36px;
+      max-width: 480px; width: 92%; text-align: center;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    #cb-level-badge {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: #b8e986; display: flex; align-items: center;
+      justify-content: center; font-size: 2.6rem;
+      margin: 0 auto 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    #cb-level-wrap h2 { color: #b8e986; font-size: 2rem; font-weight: 900; margin-bottom: 6px; }
+    #cb-level-wrap .cb-level-sub { color: rgba(255,255,255,0.7); font-size: 1rem; margin-bottom: 20px; }
+    #cb-level-score-box {
+      background: rgba(184,233,134,0.12); border: 1px solid rgba(184,233,134,0.3);
+      border-radius: 14px; padding: 14px 20px; margin-bottom: 22px;
+    }
+    #cb-level-score-box .cb-score-label { color: rgba(255,255,255,0.5); font-size: 0.8rem; }
+    #cb-level-score-box .cb-score-val { color: #b8e986; font-size: 1.6rem; font-weight: 900; }
+    #cb-level-wrap .cb-level2-teaser {
+      color: rgba(255,255,255,0.65); font-size: 0.9rem;
+      margin-bottom: 24px; line-height: 1.5;
+    }
+    #cb-level-wrap .cb-level2-teaser strong { color: #fff; }
 
     /* ── Certificate overlay ──────────────────────────────────────── */
     #cb-cert-overlay {
@@ -107,8 +153,31 @@
     </span>
   </div>
 
+  <!-- ── Level pill ────────────────────────────────────────────── -->
+  <div id="cb-level-pill"></div>
+
   <!-- ── Game root ───────────────────────────────────────────────── -->
   <div id="root"></div>
+
+  <!-- ── Level transition overlay ──────────────────────────────── -->
+  <div id="cb-level-overlay">
+    <div id="cb-level-wrap">
+      <div id="cb-level-badge">🏆</div>
+      <h2>Level 1 Complete!</h2>
+      <p class="cb-level-sub">Great work, CrimeBuster!</p>
+      <div id="cb-level-score-box">
+        <div class="cb-score-label">YOUR SCORE</div>
+        <div class="cb-score-val" id="cb-l1-score-display">—</div>
+      </div>
+      <p class="cb-level2-teaser">
+        Ready for <strong>Level 2</strong>? The questions get trickier —
+        encryption, social engineering, data breaches &amp; more.
+        Only real CrimeBusters make it through!
+      </p>
+      <button class="cb-btn cb-btn-green" style="width:100%;font-size:1.1rem;padding:16px"
+              onclick="cbGoLevel2()">Take on Level 2 →</button>
+    </div>
+  </div>
 
   <!-- ── Certificate overlay ────────────────────────────────────── -->
   <div id="cb-cert-overlay">
@@ -162,9 +231,149 @@
     };
     window.getResource = path => ASSET_MAP[path] || (CDN + path);
 
+    // ── Level 2 questions (harder) ───────────────────────────────────
+    const LEVEL2_QUESTIONS = [
+      // ── ADVANCED PHISHING / SOCIAL ENGINEERING ───────────────────
+      {
+        ENUNCIADO: "You get an email from 'support@paypa1.com' asking you to verify your account. What's the red flag?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "The domain is 'paypa1' not 'paypal' — a lookalike", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "The email mentions your account",                    RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "It came from a support address",                     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      {
+        ENUNCIADO: "A caller claims to be IT support and says they need your password to fix your account urgently. What do you do?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "Refuse — real IT never needs your password", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Give it since they sound official",           RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Give only your username, not password",       RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      {
+        ENUNCIADO: "What is 'spear phishing'?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "A targeted attack using personal details to seem trustworthy", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Mass spam sent to millions of people",                         RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "A type of fishing game app",                                   RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      // ── ENCRYPTION & HTTPS ───────────────────────────────────────
+      {
+        ENUNCIADO: "You see a padlock icon and 'https://' in your browser address bar. What does this mean?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "Your connection to the site is encrypted",   RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "The website is 100% safe and trustworthy",   RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "The site is owned by the government",        RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      {
+        ENUNCIADO: "What does end-to-end encryption do to your messages?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "Only the sender and receiver can read them — nobody in between", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Deletes messages after 24 hours",                                RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Makes messages load faster",                                     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      // ── RANSOMWARE & MALWARE ─────────────────────────────────────
+      {
+        ENUNCIADO: "Ransomware locks your files and demands money. What's the BEST way to recover without paying?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "Restore from a backup you kept offline", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Pay the ransom immediately",              RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Restart the computer repeatedly",        RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      {
+        ENUNCIADO: "Which action is MOST likely to install malware on your device?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "Downloading a pirated game from an unknown site", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Using a strong password",                          RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Turning on automatic updates",                     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      // ── DATA BREACHES & PRIVACY ──────────────────────────────────
+      {
+        ENUNCIADO: "You get a notification that a website you use was hacked and passwords leaked. What should you do FIRST?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "Change that password immediately — and any site using the same one", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Wait to see if anything bad happens",                                RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Delete the website's app",                                           RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      {
+        ENUNCIADO: "What is a VPN mainly used for?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "Encrypting your internet traffic and hiding your IP address", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Making your internet faster",                                  RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Protecting you from all viruses",                              RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      // ── PASSWORDS (ADVANCED) ─────────────────────────────────────
+      {
+        ENUNCIADO: "What is a password manager?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "A tool that securely stores and generates strong passwords", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "A person who manages your accounts for you",                 RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "A browser setting to auto-fill one simple password",         RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      {
+        ENUNCIADO: "Why is reusing the same password on multiple websites dangerous?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "One breach gives attackers access to all your accounts", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "It makes passwords easier to guess",                     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Websites don't allow duplicate passwords",               RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      // ── NETWORK & DEVICE SECURITY ────────────────────────────────
+      {
+        ENUNCIADO: "What does a firewall do?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "Monitors and blocks suspicious network traffic", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Speeds up your Wi-Fi connection",                RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Stores backups of your files",                   RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      {
+        ENUNCIADO: "Why are software updates important for security?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "They patch known vulnerabilities attackers can exploit", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "They make the screen look prettier",                     RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "They reset your passwords automatically",                RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+      {
+        ENUNCIADO: "An app on your phone asks for access to your microphone to show you the weather. What should you do?",
+        MULTIMEDIA: null, MULTIMEDIA_TIPO: null,
+        RESPUESTAS: [
+          { RESPUESTA: "Deny it — a weather app has no reason to need the microphone", RESPUESTA_CORRECTA: "si", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Allow it — apps always need all permissions",                  RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+          { RESPUESTA: "Delete all weather apps",                                       RESPUESTA_CORRECTA: "no", MULTIMEDIA: null, MULTIMEDIA_TIPO: null },
+        ],
+      },
+    ];
+
     // ── Player session ───────────────────────────────────────────────
     let playerName = localStorage.getItem('cb_player_name') || '';
     let lastScore = 0;
+    let level1Score = 0;
+
+    // ── Level tracking ───────────────────────────────────────────────
+    const currentLevel = parseInt(sessionStorage.getItem('cb_level') || '1', 10);
 
     if (playerName) {
       document.getElementById('cb-name-input').value = playerName;
@@ -177,6 +386,9 @@
       playerName = document.getElementById('cb-name-input').value.trim();
       if (!playerName) return;
       localStorage.setItem('cb_player_name', playerName);
+      // Fresh start always begins at level 1
+      sessionStorage.removeItem('cb_level');
+      sessionStorage.removeItem('cb_l1_score');
       document.getElementById('cb-name-screen').style.display = 'none';
       _launchGame();
     }
@@ -199,8 +411,8 @@
       // Build config with real player name
       window.__EDUCAPLAY_GAME_CONFIG = {
         id: 'crimebusters-local',
-        title: 'Cyber Wisdom',
-        description: 'Cybersecurity Challenge',
+        title: currentLevel === 2 ? 'Cyber Wisdom — Level 2' : 'Cyber Wisdom',
+        description: currentLevel === 2 ? 'Advanced Cybersecurity Challenge' : 'Cybersecurity Challenge',
         author: 'CrimeBusters',
         url: 'http://localhost:8000',
         user: { name: playerName, nickname: playerName, username: playerName, type: 'anonymous', token: 'cb-' + playerName, image: 'https://cloud.educaplay.com/r/activitiesassets/common/usuario.svg' },
@@ -265,9 +477,11 @@
           OCULTAR_RESPUESTAS: '0',
           OCULTAR_REINICIAR: '0',
           OCULTAR_REDES: '0',
-          TEXTO_FINAL: "You're a CrimeBuster! Stay safe online! 🔐",
+          TEXTO_FINAL: currentLevel === 2
+            ? "You're a Level 2 CrimeBuster! Outstanding cyber skills! 🔐"
+            : "Level 1 done! Get ready for Level 2…",
 
-          PREGUNTAS: [
+          PREGUNTAS: currentLevel === 2 ? LEVEL2_QUESTIONS : [
             // ── PHISHING ─────────────────────────────────────────────
             {
               ENUNCIADO: "You get an email saying you won a free phone! It asks for your home address. What do you do?",
@@ -423,6 +637,11 @@
         });
       }).observe(document.body, { childList: true, subtree: true });
 
+      // Show level pill
+      const pill = document.getElementById('cb-level-pill');
+      pill.textContent = currentLevel === 2 ? 'LEVEL 2 — Advanced' : 'LEVEL 1 — Beginner';
+      pill.style.display = 'block';
+
       // Inject game script
       const s = document.createElement('script');
       s.type = 'module';
@@ -430,12 +649,31 @@
       document.body.appendChild(s);
     }
 
-    // ── Certificate ──────────────────────────────────────────────────
+    // ── Level 1 score stored across reload ───────────────────────────
+    level1Score = parseFloat(sessionStorage.getItem('cb_l1_score') || '0');
+
+    // ── Activity finish handler ───────────────────────────────────────
     window.addEventListener('activity-finish', e => {
       const d = e.detail || {};
       lastScore = d.points ?? d.score ?? 0;
-      setTimeout(showCertificate, 2200);
+
+      if (currentLevel === 1) {
+        sessionStorage.setItem('cb_l1_score', String(lastScore));
+        setTimeout(showLevelTransition, 2200);
+      } else {
+        setTimeout(showCertificate, 2200);
+      }
     });
+
+    function showLevelTransition() {
+      document.getElementById('cb-l1-score-display').textContent = Math.round(lastScore) + ' pts';
+      document.getElementById('cb-level-overlay').classList.add('show');
+    }
+
+    function cbGoLevel2() {
+      sessionStorage.setItem('cb_level', '2');
+      location.reload();
+    }
 
     function showCertificate() {
       drawCertificate();
@@ -497,24 +735,33 @@
       // has completed
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.font = '13px Arial';
-      ctx.fillText('has completed the Cybersecurity Challenge', W/2, 240);
+      ctx.fillText('has completed the Cybersecurity Challenge', W/2, 236);
+      ctx.fillStyle = '#b8e986';
+      ctx.font = 'bold 12px Arial';
+      ctx.fillText('LEVEL 1  +  LEVEL 2', W/2, 254);
 
-      // Score badge
-      const pct = Math.round(lastScore);
-      const grade = pct >= 80 ? '⭐ Expert CrimeBuster'
-                  : pct >= 55 ? '🔍 Junior CrimeBuster'
-                  :             '🛡️ CrimeBuster Trainee';
+      // Score badge — average both levels
+      const avgScore = level1Score > 0
+        ? Math.round((level1Score + lastScore) / 2)
+        : Math.round(lastScore);
+      const grade = avgScore >= 80 ? '⭐ Expert CrimeBuster'
+                  : avgScore >= 55 ? '🔍 Junior CrimeBuster'
+                  :                  '🛡️ CrimeBuster Trainee';
 
       ctx.fillStyle = 'rgba(184,233,134,0.15)';
-      ctx.roundRect(W/2-140, 258, 280, 44, 10); ctx.fill();
+      ctx.roundRect(W/2-140, 266, 280, 52, 10); ctx.fill();
       ctx.strokeStyle = 'rgba(184,233,134,0.4)'; ctx.lineWidth = 1;
-      ctx.roundRect(W/2-140, 258, 280, 44, 10); ctx.stroke();
+      ctx.roundRect(W/2-140, 266, 280, 52, 10); ctx.stroke();
 
       ctx.fillStyle = '#b8e986';
       ctx.font = 'bold 16px Arial';
-      ctx.fillText(`Score: ${pct} pts`, W/2, 276);
+      ctx.fillText(`Combined Score: ${avgScore} pts`, W/2, 284);
+      ctx.font = '12px Arial';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText(`Lvl 1: ${Math.round(level1Score)} pts  •  Lvl 2: ${Math.round(lastScore)} pts`, W/2, 299);
+      ctx.fillStyle = '#b8e986';
       ctx.font = '13px Arial';
-      ctx.fillText(grade, W/2, 294);
+      ctx.fillText(grade, W/2, 312);
 
       // Date
       ctx.fillStyle = 'rgba(255,255,255,0.4)';
@@ -537,11 +784,15 @@
 
     function cbPlayAgain() {
       document.getElementById('cb-cert-overlay').classList.remove('show');
+      sessionStorage.removeItem('cb_level');
+      sessionStorage.removeItem('cb_l1_score');
       location.reload();
     }
 
     function cbSwitchPlayer() {
       localStorage.removeItem('cb_player_name');
+      sessionStorage.removeItem('cb_level');
+      sessionStorage.removeItem('cb_l1_score');
       location.reload();
     }
 
